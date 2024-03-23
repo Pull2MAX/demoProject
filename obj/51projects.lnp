@@ -1,0 +1,14 @@
+".\obj\STARTUP.obj",
+".\obj\main.obj",
+".\obj\adjustMode.obj",
+".\obj\uart.obj",
+".\obj\ds18b20.obj",
+".\obj\lcd1602.obj",
+".\obj\ds1302.obj",
+".\obj\ds1302delay.obj",
+".\obj\buzzer.obj",
+".\obj\motor.obj",
+".\obj\key4_4.obj",
+".\obj\ir.obj" 
+TO ".\obj\51projects" 
+PRINT(".\lst\51projects.m51")

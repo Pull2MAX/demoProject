@@ -1,0 +1,211 @@
+C51 COMPILER V9.01   DS1302                                                                03/20/2024 01:22:19 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE DS1302
+OBJECT MODULE PLACED IN .\obj\ds1302.obj
+COMPILER INVOKED BY: D:\MyProgrammeSetUp\KEILC51\C51\BIN\C51.EXE src\drive\ds1302.c LARGE BROWSE INCDIR(..\final_project
+                    -s;.\src;.\src\app;.\src\drive;.\src\include) DEBUG OBJECTEXTEND PRINT(.\lst\ds1302.lst) OBJECT(.\obj\ds1302.obj)
+
+line level    source
+
+   1          /*--------×¢Òâ±¾ÏîÄ¿µÄ²¨ÌØÂÊ»¹ÓĞÑÓÊ±Ê±¼ä¶¼ÊÇ½¨Á¢ÔÚ¾§ÕñÊÇ12MHZµÄÇé¿öÏÂ¼ÆËã³öÀ´µÄ*/
+   2          
+   3          #include"ds1302.h"
+   4          
+   5          /*unsigned char code READ_RTC_ADDR[7] = {0x81,0x83,0x85,0x87,0x89,0x8b,0x8d}; //¶ÁµÄÊ±ºòÓ¦¸ÃĞ´µÄ¼Ä´æÆ÷µØÖ·
+   6          unsigned char code WRITE_RTC_ADDR[7] = {0x80,0x82,0x84,0x86,0x88,0x8a,0x8c};//Ğ´µÄÊ±ºòµÄ¼Ä´æÆ÷µØÖ· */
+   7          
+   8          //unsigned char TIME[7];//´æ´¢¶Á³öÀ´µÄÕæÕıµÄÊ±¼ä          Ãë·ÖÊ±ÈÕÔÂÖÜÄê
+   9          
+  10          struct allTime mytime;
+  11          
+  12           /*-------------------------------------------------------------------µ×²ãÊ±Ğò----------------------------
+             -------------------------------------------*/
+  13          //¡¾¶ÁºÍĞ´µÄµØÖ·µÄ¿ªÍ·ÊÇ²»Ò»ÑùµÄ£¬ds1302»á¸ù¾İ¿ªÍ·µÄ¶ÁĞ´×öÏàÓ¦µÄ×¼±¸¡¿
+  14          //Ïòds1302µÄ¼Ä´æÆ÷addrĞ´ÈëÒ»¸öÖµvalue,Õâ¸öĞ´Ö¸µÄÊÇµ¥Æ¬»ú¡¾Ğ´µ½¡¿ds1302£¬ËùÒÔds1302×Ô¼ºĞèÒªÔÚÉÏÉıÑØ¡¾¶ÁÈ¡¡¿
+  15          static void ds1302_write_reg(unsigned char addr,unsigned char value){ 
+  16   1              
+  17   1              unsigned char i = 0;
+  18   1              //unsigned char dat = 0;
+  19   1              //1.Ê±Ğò¿ªÊ¼(³õÊ¼×´Ì¬)
+  20   1              SCLK = 0;
+  21   1              _nop_();
+  22   1              RST = 0;
+  23   1              _nop_();
+  24   1              //2.Ğ´ÈëµÚÒ»×Ö½Ú  addrµÄÄÚÈİ
+  25   1              RST = 1;
+  26   1              _nop_();
+  27   1              for(i = 0;i < 8;++i){
+  28   2                      DSIO = addr&0x01; //¶ÁÈ¡µ½µÄ×îµÍÎ»·ÅÔÚd0£¬×î¸ßÎ»·ÅÔÚÁËd7£¨¿´Ô­ÀíÍ¼£©
+  29   2                      addr = addr >> 1;
+  30   2                      //DSIO = dat;//ÔÚÒı½ÅÉÏ×¼±¸ºÃÊı¾İ£¬ÔÚÏÂÃæµÄÉÏÉıÑØºó»á¶ÁÈ¡Òı½ÅµÄÊı¾İ
+  31   2                      SCLK = 1;       //ÉÏÉıÑØµÄÊ±ºò¿ªÊ¼¶ÁÈ¡Òı½ÅµÄÊıÖµ
+  32   2                      _nop_();
+  33   2                      SCLK= 0;//À­µÍ ÎªÏÂÒ»´Î¶ÁÈ¡×¼±¸
+  34   2                      _nop_();
+  35   2              }        /*¿´Ô­ÀíÍ¼¿ÉÖª£ºR/W¶ÁÈ¡µ½R/CÒ»¹²ÊÇ°ËÎ»£¬¶ø¼Ä´æÆ÷¾ÍÆß¸ö£¬
+  36   1              Òò´ËÖ»ÓĞÖĞ¼äµÄA0-A4Î¨Ò»±íÊ¾¼Ä´æÆ÷£¬ÆäËûµÄ¾ÍÊÇ¿ØÖÆÎ»£¬
+  37   1              ds1302»áÆÁ±Î²¢ÇÒÊ¶±ğÕıÈ·µÄ¼Ä´æÆ÷µØÖ·£¬È»ºóÏÂÒ»¸öforÑ­»·»á°Ñd0---d7ÌîÂú   
+  38   1               */
+  39   1      
+  40   1              //3.Ğ´ÈëµÚ¶ş×Ö½Ú  value
+  41   1      
+  42   1              for(i = 0;i < 8;++i){
+  43   2                      DSIO = value&0x01;
+  44   2                      value = value>>1;
+  45   2                      SCLK = 1;
+  46   2                      _nop_();
+  47   2                      SCLK = 0;
+  48   2                      _nop_();
+  49   2              }
+  50   1              //4.Ê±Ğò½áÊø
+  51   1              RST = 0;
+  52   1              _nop_();
+  53   1              SCLK = 0;
+C51 COMPILER V9.01   DS1302                                                                03/20/2024 01:22:19 PAGE 2   
+
+  54   1              _nop_();
+  55   1      }
+  56          
+  57          
+  58          //´Óds1302µÄ¼Ä´æÆ÷¶ÁÈ¡Ò»¸ö×Ö½ÚÖ¸µÄÊÇµ¥Æ¬»ú´Ó¡¾¶ÁÈ¡¡¿i/o¿ÚµÄÊı¾İ£¬Òò´Ëds1302ĞèÒª½«µØÖ·¾­¹ıÏÂ½µÑØ¡¾Ğ´µ½¡¿i/o
+             -¿Ú
+  59          
+  60          static unsigned char ds1302_read_reg(unsigned char addr){        //¸ù¾İµØÖ·µÄµÚÒ»Î»È·¶¨ÊÇ¶Á»¹ÊÇĞ´£¨ÊÇ1¾Í±íÊ¾¶Á£¬
+             -ËùÒÔ´«µİÖÁ¶¼ÊÇ8¿ªÍ·µÄ£©
+  61   1              unsigned char i = 0;
+  62   1              unsigned char tmp = 0;
+  63   1              unsigned char dat = 0;
+  64   1              
+  65   1              //1.Ê±Ğò¿ªÊ¼
+  66   1              RST = 0;
+  67   1              _nop_();
+  68   1              SCLK = 0;
+  69   1              _nop_();
+  70   1      
+  71   1              //2.È·¶¨mcuÒª¶ÁÈ¡ÄÄÒ»¸ö¼Ä´æÆ÷µÄµØÖ·     £¬¼Ä´æÆ÷µÄµØÖ·ĞèÒªÓÉmcuĞ´µ½ds1302
+  72   1              RST = 1;
+  73   1              _nop_();
+  74   1              for(i = 0;i < 8;++i){
+  75   2                      DSIO = addr&0x01;//´ÓµÍÎ»¿ªÊ¼
+  76   2                      //DSIO = dat;//½«Ô­À´µÄaddr¡¾µ¹×Å¡¿·Åµ½ÁËdsioÀïÃæ       £¬ÕâÑù¾ÍºÏÀí½âÊÍÁËÎªÊ²Ã´¶ÁĞ´¶¼ÊÇ8¿ªÍ·£¬ÒòÎªdsio×îºóÒ»Î
+             -»±£³ÖÊÇ1£¡
+  77   2                      addr>>=1;
+  78   2                      SCLK = 1;
+  79   2                      _nop_();
+  80   2                      SCLK = 0;
+  81   2                      _nop_();
+  82   2                      }
+  83   1              //3.ds1302¸ù¾İÎÒÃÇÌá¹©µÄµØÖ·ÕÒµ½Õâ¸öµØÖ·ÀïµÄÄÚÈİÈ»ºóÍ¨¹ıi/o·µ»Ø¸ømcu
+  84   1      
+  85   1              //Ò»µ©µØÖ·±»·¢ËÍ£¬DS1302 ¾Í»á½«¸ÃµØÖ·¶ÔÓ¦µÄ¼Ä´æÆ÷µÄÊı¾İ·ÅÔÚ DS1302 µÄ I/O Òı½ÅÉÏ£¬¶ø MCU ÔòÖğÎ»µØ´ÓÕâ¸öÒı
+             -½Å¶ÁÈ¡Êı¾İ¡£
+  86   1              //dat = 0;
+  87   1              for(i = 0;i < 8;++i){
+  88   2                      tmp = DSIO;              //ÕâÒ»ĞĞÔÚ×îÇ°ÃæµÄÔ­ÒòÊÇÉÏÒ»¸öforÑ­»·½áÊøµÄÊ±ºòÊÇ1µ½0µÄÏÂ½µÑØ£¬¶øÕâ¸öÊ±ºò¾ÍÒÑ¾­¿ÉÒÔ¿ªÊ¼¶ÁÈ
+             -¡d0µÄÊı¾İÁË ,ÁíÍâ Ğ´tempµÄÔ­ÒòÊÇ·½±ã±àÒëÆ÷Àí½â£¬keil²»Ö§³Ösbit¶¨ÒåµÄ¶«Î÷µÄ×óÓÒÒÆ¶¯ ,µ±ÄãÏò DS1302 ·¢ËÍÍê¼Ä´æÆ÷µØÖ·ºó£¬DS
+             -1302 ÄÚ²¿Âß¼­»á×¼±¸ÏàÓ¦¼Ä´æÆ÷µÄÊı¾İ£¬²¢½«Æä·ÅÖÃÔÚ I/O Òı½ÅÉÏ¡£  ÔÚÕâ¸ö½×¶Î£¬DS1302 ÒÑ¾­ÖªµÀÄãÒªÖ´ĞĞµÄÊÇ¶ÁÈ¡²Ù×÷£¬²¢ÇÒÖªµ
+             -ÀÁËÒª¶ÁÈ¡µÄ¼Ä´æÆ÷µØÖ·¡£
+  89   2                      dat |= (tmp << i);      //dsioÀï´æ´¢µÄµÚÒ»¸öÊÇµÍÎ»£¬×îºóÒ»¸ö²ÅÊÇ¸ßÎ»
+  90   2                      SCLK = 1;
+  91   2                      _nop_();
+  92   2                      SCLK = 0;
+  93   2                      _nop_();                                
+  94   2              }
+  95   1              //4.Ê±Ğò½áÊø
+  96   1              SCLK = 0;
+  97   1              _nop_();
+  98   1              RST = 0;
+  99   1              _nop_();
+ 100   1              
+ 101   1              return dat;                                               
+ 102   1      }
+ 103          
+ 104          /*-----------------------------------------------------------¸ß²ãÊ±Ğò-------------------------------------
+             ---------------------------*/
+ 105          /*void ds1302_write_time(void){
+ 106                  unsigned char i = 0;
+ 107                  TIME[0] = 0x33;                         // ¶ÔÓ¦ 24s
+C51 COMPILER V9.01   DS1302                                                                03/20/2024 01:22:19 PAGE 3   
+
+ 108                  TIME[1] = 0x22;                         // ¶ÔÓ¦ 39m
+ 109                  TIME[2] = 0x11;                         // ¶ÔÓ¦ 11h
+ 110                  TIME[3] = 0x23;                         // ¶ÔÓ¦ 6ÈÕ
+ 111                  TIME[4] = 0x12;                         // ¶ÔÓ¦ 12ÔÂ
+ 112                  TIME[5] = 0x02;                         // ¶ÔÓ¦ ĞÇÆÚ2
+ 113                  TIME[6] = 0x28;                         // ¶ÔÓ¦ 2016Äê
+ 114          
+ 115                  ds1302_write_reg(0x8e,0x00);  //¹Ø±ÕĞ´±£»¤
+ 116                  for(i = 0;i < 7;++i){
+ 117                          ds1302_write_reg(WRITE_RTC_ADDR[i], TIME[i]);
+ 118                  }
+ 119                  ds1302_write_reg(0x8e,0x80); //´ò¿ªĞ´±£»¤
+ 120          }
+ 121          
+ 122          void ds1302_read_time(void){
+ 123                  unsigned char i = 0;
+ 124                  
+ 125                  for(i = 0;i < 7;++i){//×¢ÒâÊÇ¶ÁÆß¸ö¼Ä´æÆ÷µÄÊıÖµ È»ºóĞ´µ½TImeÊı×éÀïÃæ·½±ãºóÃæµÄº¯Êı¿´
+ 126                    TIME[i] = ds1302_read_reg(READ_RTC_ADDR[i]);   
+ 127                  }       
+ 128          }       */
+ 129          /*-----------------------------------------Á½¸öÖØÒªµÄº¯ÊıÊ¹µÃÊ®½øÖÆ»¹ÓĞbcdÖ®¼ä¿ÉÒÔÏà»¥×ª»»----------------
+             -------------------------------------------------*/
+ 130          unsigned char bcd2decimal(unsigned char bcd){//½ÓÊÕµÄÊÇbcdÂë£¬±ÈÈç0x24£¬ĞèÒª±ä³ÉÊ®½øÖÆ24
+ 131   1              //µÚÒ»²½ÊÇ´Ó0x24µÃµ½2ºÍ4 £¬
+ 132   1              //¸ßËÄÎ»ÊÇ(bcd & oxf0)>>4£¬µÍËÄÎ»ÊÇ(bcd & 0x0f)
+ 133   1              
+ 134   1              //µÚ¶ş²½ÊÇ2*10+4
+ 135   1              
+ 136   1              return ((bcd & 0xf0)>>4)*10 + (bcd & 0x0f);     
+ 137   1      }
+ 138          
+ 139          unsigned char decimal2bcd(unsigned char decimal){
+ 140   1              //¾ÍÊÇĞèÒª°Ñdecimal×ªÎªbcd
+ 141   1               return ((decimal/10)<<4 | (decimal%10)) ; 
+ 142   1                      
+ 143   1      }
+ 144          
+ 145          void ds1302_read_time_struct(void){
+ 146   1      //¡¾×¢Òâ¡¿ ds1302_read_regÖ±½Ó¶Á³öÀ´µÄÊÇbcdÂë£¬Ö±½ÓÈ¥ÏÔÊ¾ÊÇÓĞÎÊÌâµÄ£¬Òò´ËĞèÒª×ªÎªÊ®½øÖÆ
+ 147   1              mytime.year =  bcd2decimal(ds1302_read_reg(REG_ADDR_READ_YEAR))+2000;     //´ÓÄÇ¸öµØÖ·¶Á³öÀ´µÄÊı×ÖÊÇÁ½Î»Êı£
+             -¬ËùÒÔĞèÒª¼ÓÉÏ2000ÒÔÏÔÊ¾ÕıÈ·µÄÄê 
+ 148   1              mytime.month = bcd2decimal(ds1302_read_reg(REG_ADDR_READ_MONTH));
+ 149   1              mytime.day = bcd2decimal(ds1302_read_reg(REG_ADDR_READ_DAY));
+ 150   1              mytime.hour = bcd2decimal(ds1302_read_reg(REG_ADDR_READ_HOUR));
+ 151   1              mytime.minute = bcd2decimal(ds1302_read_reg(REG_ADDR_READ_MINUTE));
+ 152   1              mytime.second = bcd2decimal(ds1302_read_reg(REG_ADDR_READ_SECOND));
+ 153   1              mytime.week = bcd2decimal(ds1302_read_reg(REG_ADDR_READ_WEEK));
+ 154   1      }
+ 155          
+ 156          void ds1302_write_time_struct(struct allTime t1){
+ 157   1              ds1302_write_reg(0x8e,0x00);  //¹Ø±ÕĞ´±£»¤
+ 158   1      
+ 159   1              ds1302_write_reg(REG_ADDR_WRITE_YEAR, decimal2bcd(t1.year-2000));
+ 160   1              ds1302_write_reg(REG_ADDR_WRITE_MONTH, decimal2bcd(t1.month));
+ 161   1              ds1302_write_reg(REG_ADDR_WRITE_DAY, decimal2bcd(t1.day));
+ 162   1          ds1302_write_reg(REG_ADDR_WRITE_HOUR, decimal2bcd(t1.hour));
+ 163   1          ds1302_write_reg(REG_ADDR_WRITE_MINUTE, decimal2bcd(t1.minute));
+ 164   1          ds1302_write_reg(REG_ADDR_WRITE_SECOND, decimal2bcd(t1.second));
+ 165   1          ds1302_write_reg(REG_ADDR_WRITE_WEEK, decimal2bcd(t1.week));
+ 166   1      
+ 167   1              ds1302_write_reg(0x8e,0x80); //´ò¿ªĞ´±£»¤
+C51 COMPILER V9.01   DS1302                                                                03/20/2024 01:22:19 PAGE 4   
+
+ 168   1      }
+ 169          
+ 170          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    330    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =      8       8
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,265 @@
+C51 COMPILER V9.01   LCD1602                                                               03/20/2024 01:22:19 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE LCD1602
+OBJECT MODULE PLACED IN .\obj\lcd1602.obj
+COMPILER INVOKED BY: D:\MyProgrammeSetUp\KEILC51\C51\BIN\C51.EXE src\drive\lcd1602.c LARGE BROWSE INCDIR(..\final_projec
+                    -ts;.\src;.\src\app;.\src\drive;.\src\include) DEBUG OBJECTEXTEND PRINT(.\lst\lcd1602.lst) OBJECT(.\obj\lcd1602.obj)
+
+line level    source
+
+   1          #include "lcd1602.h"
+   2          
+   3          
+   4          /***********µ×²ãÊ±Ğò***************/
+   5          static void isBusy(){   //Ã¦¼ì²âº¯Êı£¬Ğ´Êı¾İ¡¢¶ÁÊı¾İ¡¢Ğ´Ö¸ÁîµÄÊ±ºò¶¼Òª¿´¿´Õâ¸öĞ¾Æ¬ÔÚ²»ÔÚÃ¦
+   6   1              unsigned char sta = 0;//µ±DBµÄ×î¸ßÎ»ÊÇ1Ê±£¬¾Í±íÊ¾Ò»Ö±ÔÚÃ¦
+   7   1              LCD1602_DB = 0xff;
+   8   1              LCD1602_RS = 0;
+   9   1              LCD1602_RW = 1;
+  10   1      
+  11   1              do{
+  12   2                      LCD1602_EN = 1;
+  13   2                      sta = LCD1602_DB&0x80;
+  14   2                      LCD1602_EN = 0;
+  15   2              }while(sta);
+  16   1      }
+  17          
+  18          static void LCD1602_Write_Command(unsigned char cmd){  //Ğ´Ö¸ÁîµÄµ×²ãº¯Êı
+  19   1              isBusy();
+  20   1              LCD1602_RS = 0;
+  21   1              LCD1602_RW = 0;
+  22   1              LCD1602_DB = cmd;
+  23   1              LCD1602_EN = 1;
+  24   1              LCD1602_EN = 0; 
+  25   1      }
+  26          
+  27          static void LCD1602_Write_Data(unsigned char dat){ //Ğ´Êı¾İµÄº¯Êı£¬¿ÉÒÔÖ¸¶¨ascii·¶Î§ÄÚµÄÄÚÈİ
+  28   1              isBusy();
+  29   1              LCD1602_RS = 1;
+  30   1              LCD1602_RW = 0;
+  31   1              LCD1602_DB = dat;
+  32   1              LCD1602_EN = 1;
+  33   1              LCD1602_EN = 0; 
+  34   1      }
+  35          
+  36          /***********¸ß²ãÊ±Ğò***************/
+  37          /*Õâ¸öº¯ÊıµÄ¹¦ÄÜÊÇ ´«¸øwrite_commandº¯ÊıµÄÖ¸ÁîÈÃÕıÔÚ±à¼­µÄÎ»ÖÃ¿ÉÒÔÏÔÊ¾ÔÚÆÁÄ»ÉÏ
+  38          xµÄÈ¡Öµ·¶Î§ÊÇ0x00µ½0x0f,yÖ»¿ÉÒÔÈ¡0x00(µÚÒ»ĞĞ)»òÕß0x40£¨µÚ¶şĞĞ£©          */
+  39          void LCDSetCursor(unsigned char x,unsigned char y){     //¾ßÌåÏÔÊ¾×Ö·ûµÄÊ±ºòĞèÒªÖ¸¶¨ÏÔÊ¾ÔÚÄÄÒ»ĞĞ£¬ÄÄÒ»ÁĞ¡£µÚÒ»
+             -ĞĞÊÇ0x00µ½0x0f¡£µÚ¶şĞĞÊÇ0x40µ½0x4f¡£
+  40   1              unsigned char addr;
+  41   1              if(y==0)
+  42   1                      addr = 0x00 + x;
+  43   1              else
+  44   1                      addr = 0x40 + x;
+  45   1              LCD1602_Write_Command(addr|0x80);               
+  46   1      }
+  47          
+  48          /*Õâ¸öº¯ÊıµÄ×÷ÓÃÊÇ»ñÈ¡¹â±êµÄÎ»ÖÃÈ»ºóÔÚ¹â±ê¿ªÊ¼µÄµØ·½ÏÔÊ¾×Ö·û´®*/
+  49          void LCDshowStr(unsigned char x,unsigned char y,unsigned char *str){
+  50   1              LCDSetCursor(x,y);
+  51   1              while(*str!='\0'){
+  52   2                      LCD1602_Write_Data(*str++);     
+  53   2              }               
+C51 COMPILER V9.01   LCD1602                                                               03/20/2024 01:22:19 PAGE 2   
+
+  54   1      }
+  55          
+  56          //Õâ¸öº¯ÊıµÄ×÷ÓÃÊÇ³õÊ¼»¯LCD1602
+  57          void InitLCD1602(){
+  58   1              LCD1602_Write_Command(0x38); //Êı¾İ×ÜÏßÊÇ°ËÎ»£¬Á½ĞĞÏÔÊ¾£¬5*7µãÕó
+  59   1              //LCD1602_Write_Command(0x0f); //¹â±êÉÁ£¬ÏÔÊ¾¹¦ÄÜ¹Ø
+  60   1              LCD1602_Write_Command(0x0c); //¹â±ê²»ÉÁ£¬ÏÔÊ¾¿ª
+  61   1              LCD1602_Write_Command(0x06); //Ğ´ÈëĞÂÊı¾İÖ®ºó¹â±êÓÒÒÆ
+  62   1              LCD1602_Write_Command(0x01);  //ÇåÆÁ²Ù×÷
+  63   1      }
+  64          
+  65          
+  66          
+  67          
+  68          //±¾º¯ÊıµÄÄ¿µÄÊÇ½«doubleÀàĞÍµÄÊıÖµÖ±½Ó×ª»»ÎªstrÀàĞÍ²¢ÇÒÕ¹Ê¾ÔÚ1602ÉÏÃæ 
+  69          static unsigned char double2strArr[25];
+  70          void lcdshowDouble2Str(unsigned char x,unsigned char y,double value){
+  71   1              sprintf(double2strArr, "%4.2f", value);
+  72   1              LCDshowStr(x,y,double2strArr);          
+  73   1      }
+  74          
+  75          //static unsigned char int2strArr[10];
+  76          void lcdshowInt2Str(unsigned char x,unsigned char y,unsigned int value){ 
+  77   1              unsigned char int2strArr[10];
+  78   1              sprintf(int2strArr, "%d", value);
+  79   1              LCDshowStr(x,y,int2strArr);
+  80   1              
+  81   1      }
+  82          
+  83          /*
+  84          //ÕâÁ½¸öº¯ÊıµÄÄ¿µÄÊÇ½ÓÊÕ×Ô¶¨Òå½á¹¹ÌåÀàĞÍµÄ±äÁ¿ ,È»ºó½«Õâ±äÁ¿ÀïÃæµÄÄÚÈİ·ÅÔÚ×¼±¸ºÃµÄÊı×éÀïÃæËæºó´òÓ¡ÔÚÆÁÄ»ÉÏ
+             -£¬Æµ·±µ÷ÓÃµÄÊÇsprintf
+  85          
+  86          static unsigned char struct2strArr[25];                                                                             
+  87          void lcdshowStruct(unsigned char x,unsigned char y,struct allTime value){
+  88                  unsigned char out_index = 0;
+  89                  unsigned char collect_locate = 0;
+  90                  unsigned char struct_collect_array[17] = {0};
+  91                  sprintf(struct2strArr, "%d", value.year);
+  92                  for(; out_index < 4;++collect_locate,++out_index){
+  93                          struct_collect_array[collect_locate] = struct2strArr[out_index];                
+  94                  } //Äê·İÒÑ¾­·Åµ½ÁËÊÕ¼¯Êı×éÖĞ
+  95          
+  96          
+  97                  out_index = 0;
+  98                  sprintf(struct2strArr, "%d", value.month);
+  99                  for(;out_index<2;++out_index,++collect_locate){
+ 100                          struct_collect_array[collect_locate] = struct2strArr[out_index];        
+ 101                  }//ÔÂ·İ·Åµ½ÁËÊı×éÖĞ
+ 102          
+ 103                  
+ 104                  out_index = 0;
+ 105                  sprintf(struct2strArr, "%d", value.day);
+ 106                  for(;out_index<2;++out_index,++collect_locate){
+ 107                          struct_collect_array[collect_locate] = struct2strArr[out_index];        
+ 108                  }//ÈÕ×Ó·Åµ½ÁËÊı×éÖĞ
+ 109                  struct_collect_array[collect_locate++] = '-';  //·ÅÒ»¸ö¡®-¡¯
+ 110          
+ 111                  out_index = 0;
+ 112                  sprintf(struct2strArr, "%2d", value.hour);
+ 113                  for(;out_index<2;++out_index,++collect_locate){
+ 114                          struct_collect_array[collect_locate] = struct2strArr[out_index];        
+C51 COMPILER V9.01   LCD1602                                                               03/20/2024 01:22:19 PAGE 3   
+
+ 115                  }//Ğ¡Ê±·Åµ½ÁËÊı×éÖĞ
+ 116                  
+ 117                  out_index = 0;
+ 118                  sprintf(struct2strArr, "%2d", value.minute);
+ 119                  for(;out_index<2;++out_index,++collect_locate){
+ 120                          struct_collect_array[collect_locate] = struct2strArr[out_index];        
+ 121                  }//·ÖÖÓ·Åµ½ÁËÊı×éÖĞ
+ 122          
+ 123                  out_index = 0;
+ 124                  sprintf(struct2strArr, "%2d", value.second);
+ 125                  for(;out_index<2;++out_index,++collect_locate){
+ 126                          struct_collect_array[collect_locate] = struct2strArr[out_index];        
+ 127                  }//Ãë·Åµ½ÁËÊı×éÖĞ
+ 128          
+ 129                  out_index = 0;
+ 130                  sprintf(struct2strArr, "%d", value.week);
+ 131                  for(;out_index<1;++out_index,++collect_locate){
+ 132                          struct_collect_array[collect_locate] = struct2strArr[out_index];        
+ 133                  }//ÖÜ¼¸·Åµ½ÁËÊı×éÖĞ
+ 134                  struct_collect_array[17] = '\0';
+ 135                  LCDshowStr(x,y,struct_collect_array);   //Ö±½ÓÏÔÊ¾Õâ¸öÌØ³¤µÄÊı×é                
+ 136          }
+ 137            */
+ 138          //²Î¿¼ÀÏÊ¦µÄË¼Â·£¬ÏÂÃæµÄº¯Êı½ÓÊÕµÄÊÇ¾ßÌåµÄÏÔÊ¾µØÖ·»¹ÓĞ½á¹¹Ìå±äÁ¿
+ 139          
+ 140          //ÊµÏÖµÄµÚÒ»¸öº¯ÊıÊÇ½«ËÄÎ»µÄÊ±¼ä×ªÎªstrÈ»ºó·Åµ½×¼±¸ºÃµÄstrÀïÃæ  
+ 141          void int2str4(unsigned int dat,unsigned char str[],unsigned char bias){
+ 142   1              unsigned char c = 0;
+ 143   1              c = dat/1000;
+ 144   1              str[bias+0] = c + '0';//×î¸ßÎ»ÄÃµ½ÁË    £¬datÊÇ2239
+ 145   1              
+ 146   1              dat = dat % 1000;
+ 147   1              c = dat / 100;
+ 148   1              str[bias+1] = c + '0';  //µÚ¶ş¸ßµÄÎ»ÄÃµ½ÁË        £¬datÊÇ239
+ 149   1      
+ 150   1              dat = dat % 100;
+ 151   1              c = dat / 10;
+ 152   1              str[bias+2] = c + '0'; //µÚÈı¸ßµÄÎ»ÖÃÄÃµ½ÁË £¬datÊÇ39
+ 153   1      
+ 154   1              c = dat % 10;           //×îºóÒ»Î»ÄÃµ½
+ 155   1              str[bias+3] = c + '0';          
+ 156   1      }                                                                                                                
+ 157          //ÊµÏÖÒ»¸ö¹¦ÄÜ£¬ÈÃÁ½Î»Êı×ªÎªstrÈ»ºó·Åµ½Êı×éÀï 
+ 158          void int2str2(unsigned int dat,unsigned char str[],unsigned char bias){
+ 159   1              unsigned char c = 0;
+ 160   1              c = dat/10;
+ 161   1              str[bias+0] = c + '0';
+ 162   1      
+ 163   1              c = dat % 10;
+ 164   1              str[bias+1] = c + '0';
+ 165   1      }
+ 166          
+ 167          
+ 168          
+ 169          void lcdshowStruct2(unsigned char x,unsigned char y,struct allTime mytime){
+ 170   1              unsigned char str[17] = {0};
+ 171   1              
+ 172   1              int2str4(mytime.year,str,0);  //ÊµÏÖµÄµÚÒ»¸öº¯ÊıÊÇ½«ËÄÎ»µÄÊ±¼ä×ªÎªstrÈ»ºó·Åµ½×¼±¸ºÃµÄstrÀïÃæ    
+ 173   1              
+ 174   1              int2str2(mytime.month,str,4);
+ 175   1      
+ 176   1              int2str2(mytime.day,str,6);
+C51 COMPILER V9.01   LCD1602                                                               03/20/2024 01:22:19 PAGE 4   
+
+ 177   1      
+ 178   1              str[8] = '-';
+ 179   1      
+ 180   1              int2str2(mytime.hour,str,9);
+ 181   1      
+ 182   1              int2str2(mytime.minute,str,11);
+ 183   1      
+ 184   1              int2str2(mytime.second,str,13);
+ 185   1      
+ 186   1              str[15] = mytime.week + '0'     ; //ÖÜ¼¸²»Òªµ÷ÓÃº¯ÊıÁË£¬ÒòÎªÔÙµ÷ÓÃint2str2»áµ¼ÖÂÖÜ¼¸Õ¼¾İ2¸öÎ»ÖÃ£¬Ã»ÓĞ2¸öÎ»ÖÃ¸
+             -øËû
+ 187   1              
+ 188   1              str[16] = '\0';
+ 189   1              LCDshowStr(x,y,str);            
+ 190   1      }
+ 191          
+ 192          
+ 193          //lcd1602µÄÕı³£Ä£Ê½£¬È¥³ı¹â±ê
+ 194          void LCDNormalMode(){
+ 195   1       
+ 196   1              LCD1602_Write_Command(0x0c); //¹â±ê²»ÉÁ£¬ÏÔÊ¾¿ª
+ 197   1      }                                                           
+ 198          //LCD1602µÄµ÷ÕûÄ£Ê½£¬ÏÔÊ¾¹â±ê
+ 199          void LCDAdjustMode(){
+ 200   1              LCD1602_Write_Command(0x0f); //¹â±êÉÁ£¬ÏÔÊ¾¹¦ÄÜ¹Ø
+ 201   1      }
+ 202           
+ 203          
+ 204          
+ 205          
+ 206          
+ 207          
+ 208          
+ 209          
+ 210          
+ 211          
+ 212          
+ 213          
+ 214          
+ 215          
+ 216          
+ 217          
+ 218          
+ 219          
+ 220          
+ 221          
+ 222          
+ 223          
+ 224          
+ 225          
+ 226          
+ 227          
+ 228          
+ 229          
+ 230          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    808    ----
+   CONSTANT SIZE    =     26    ----
+   XDATA SIZE       =     25      60
+   PDATA SIZE       =   ----    ----
+C51 COMPILER V9.01   LCD1602                                                               03/20/2024 01:22:19 PAGE 5   
+
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

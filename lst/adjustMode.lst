@@ -1,0 +1,232 @@
+C51 COMPILER V9.01   ADJUSTMODE                                                            03/20/2024 01:22:19 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE ADJUSTMODE
+OBJECT MODULE PLACED IN .\obj\adjustMode.obj
+COMPILER INVOKED BY: D:\MyProgrammeSetUp\KEILC51\C51\BIN\C51.EXE src\app\adjustMode.c LARGE BROWSE INCDIR(..\final_proje
+                    -cts;.\src;.\src\app;.\src\drive;.\src\include) DEBUG OBJECTEXTEND PRINT(.\lst\adjustMode.lst) OBJECT(.\obj\adjustMode.ob
+                    -j)
+
+line level    source
+
+   1          /*
+   2                  本文件是驱动的中间层， 用来lcd1602调整显示模式的函数
+   3          */
+   4          #include"adjustMode.h"
+   5          double alert_temperature_threshold = 28.0;
+   6          double  Temperature = 0;
+   7          void keyEventHandler_delay400ms(void);
+   8          //本函数实现的功能是在正常模式还有调整模式之间切换，workMode显示0代表正常模式，但是不显示光标。为1代表显示
+             -光标的调整模式。
+   9          static unsigned char workMode = 0;
+  10          static unsigned char x_start = 0,y_start = 0;//
+  11          
+  12          static void temperature_alert(){
+  13   1              if(Temperature>alert_temperature_threshold){
+  14   2                      motor_run_alert();      
+  15   2              }
+  16   1      }
+  17          
+  18          //常规模式下温度和时间的信息显示
+  19          void display_normal_temperature_time(){
+  20   1              //第一行显示温度
+  21   1              Temperature = Ds18b20ReadDecimalTemperature();
+  22   1              lcdshowDouble2Str(2,0,Temperature);
+  23   1      
+  24   1              //第二行显示时间
+  25   1              ds1302_read_time_struct();
+  26   1              lcdshowStruct2(0,1,mytime);//第二行展示时间
+  27   1      
+  28   1              temperature_alert();
+  29   1      }
+  30          static void delay150ms(void)   //误差 0us
+  31          {
+  32   1          unsigned char a,b,c;
+  33   1          for(c=3;c>0;c--)
+  34   1              for(b=116;b>0;b--)
+  35   1                  for(a=214;a>0;a--);
+  36   1      }
+  37          
+  38          
+  39          
+  40          void WorkModeAdjust(){
+  41   1      
+  42   1              workMode = !workMode;
+  43   1              if(workMode==0){  //正常模式，光标不闪 ，温度正常显示，时钟正常计数
+  44   2                      LCDNormalMode();
+  45   2                      display_normal_temperature_time();              
+  46   2              }
+  47   1              else{ //调整模式，光标闪烁,温度和时间不会刷新，只会移动光标和光标处的加减
+  48   2                      LCDAdjustMode();
+  49   2                      //光标闪烁起始位置是要人为去设定光标的位置的
+  50   2                      LCDSetCursor(x_start,y_start);  
+  51   2              }
+  52   1              
+C51 COMPILER V9.01   ADJUSTMODE                                                            03/20/2024 01:22:19 PAGE 2   
+
+  53   1      }
+  54          
+  55          void KeyWorkModeAdjust(){
+  56   1              if(getKeyValue()==1){
+  57   2                      WorkModeAdjust();
+  58   2              }       
+  59   1      }
+  60          
+  61          //本函数实现的功能是调整模式的时候，让光标出现并且被4*4键盘控制上下左右移动，3->上，2->左，4->右
+  62          void KeyCursorMove(){
+  63   1              unsigned char keyvalue = 0; 
+  64   1              keyvalue = getKeyValue();
+  65   1              if(workMode==0) return ;
+  66   1              if(keyvalue==0)return ; 
+  67   1              if(!(keyvalue>1&&keyvalue<5))return ;
+  68   1      
+  69   1              delay150ms();
+  70   1              switch(keyvalue){
+  71   2                      case 2:    //左
+  72   2                              if(x_start==0){
+  73   3                                      x_start = 15;
+  74   3                              }else{
+  75   3                                      x_start = x_start - 1;
+  76   3                              }
+  77   2                              LCDSetCursor(x_start,y_start);
+  78   2                              break;
+  79   2                      case 3:   //上
+  80   2                              y_start = !y_start;
+  81   2                              LCDSetCursor(x_start,y_start);
+  82   2                              break;
+  83   2                      case 4:  //
+  84   2                              if(x_start==15){
+  85   3                                      x_start = 0;
+  86   3                              }else{
+  87   3                                      x_start = x_start + 1;
+  88   3                              }
+  89   2                              LCDSetCursor(x_start,y_start);
+  90   2                              break;
+  91   2                              
+  92   2                      default:
+  93   2                              break;  
+  94   2              }
+  95   1      }
+  96          
+  97          //本函数是实现阈值部位的数值增加和减少,传参数是1代表增加，传参数是0代表减少
+  98          static void setNumber(unsigned char numberFlag){
+  99   1              if(y_start==0){
+ 100   2                      unsigned char x = x_start;
+ 101   2                      switch(x){
+ 102   3                              case 12:
+ 103   3                                      if(numberFlag){
+ 104   4                                              alert_temperature_threshold+=10;        
+ 105   4                                      }else{
+ 106   4                                              alert_temperature_threshold-=10;
+ 107   4                                      }
+ 108   3                                      break;
+ 109   3                              case 13:
+ 110   3                                      if(numberFlag){
+ 111   4                                              alert_temperature_threshold+=1; 
+ 112   4                                      }else{
+ 113   4                                              alert_temperature_threshold-=1;
+ 114   4                                      }
+C51 COMPILER V9.01   ADJUSTMODE                                                            03/20/2024 01:22:19 PAGE 3   
+
+ 115   3                                      break;
+ 116   3                              case 15:
+ 117   3                                      if(numberFlag){
+ 118   4                                              alert_temperature_threshold+=0.1;       
+ 119   4                                      }else{
+ 120   4                                              alert_temperature_threshold-=0.1;
+ 121   4                                      }
+ 122   3                                      break;
+ 123   3                              default:break;          
+ 124   3                      }
+ 125   2                 lcdshowDouble2Str(12,0,alert_temperature_threshold);
+ 126   2                 LCDSetCursor(x_start,y_start);//把光标还原
+ 127   2              }
+ 128   1              else{  //第一行 设置时间 ,调节一个分钟意思一下
+ 129   2                      switch(x_start){
+ 130   3              case 11:
+ 131   3                      if(numberFlag){
+ 132   4                              mytime.minute+=10;      
+ 133   4                      }else{
+ 134   4                              mytime.minute-=10;
+ 135   4                      }
+ 136   3              break;
+ 137   3          case 12:
+ 138   3              if(numberFlag){
+ 139   4                              mytime.minute+=1;       
+ 140   4                      }else{
+ 141   4                              mytime.minute-=1;
+ 142   4                      }
+ 143   3              break;
+ 144   3       
+ 145   3          default:
+ 146   3              // 如果 x_start 的值不在 0 到 15 之间
+ 147   3              break;} 
+ 148   2              
+ 149   2              lcdshowStruct2(0,1,mytime);     //1302展示时间
+ 150   2              ds1302_write_time_struct(mytime);
+ 151   2              
+ 152   2              
+ 153   2              }               
+ 154   1      }
+ 155          
+ 156          //本函数本质上是上面两个函数的综合,根据传进来的键值去做相应的操作
+ 157          void keyEventHandler(unsigned char keyvalue){
+ 158   1              switch(keyvalue){
+ 159   2                      case 0:
+ 160   2                              if(workMode==0)display_normal_temperature_time();break;
+ 161   2                      case 1:
+ 162   2                              WorkModeAdjust();
+ 163   2                              break;
+ 164   2                      case 2:    //左
+ 165   2                              if(workMode==0)break;
+ 166   2                              if(x_start==0){
+ 167   3                                      x_start = 15;
+ 168   3                              }else{
+ 169   3                                      x_start = x_start - 1;
+ 170   3                              }
+ 171   2                              LCDSetCursor(x_start,y_start);
+ 172   2                              break;
+ 173   2                      case 3:   //上
+ 174   2                              if(workMode==0)break;
+ 175   2                              y_start = !y_start;
+ 176   2                              LCDSetCursor(x_start,y_start);
+C51 COMPILER V9.01   ADJUSTMODE                                                            03/20/2024 01:22:19 PAGE 4   
+
+ 177   2                              break;
+ 178   2                      case 4:  // 右
+ 179   2                              if(workMode==0)break;
+ 180   2                              if(x_start==15){
+ 181   3                                      x_start = 0;
+ 182   3                              }else{
+ 183   3                                      x_start = x_start + 1;
+ 184   3                              }
+ 185   2                              LCDSetCursor(x_start,y_start);
+ 186   2                              break;
+ 187   2                      case 5: //加
+ 188   2                              if(workMode==0)break;
+ 189   2                              setNumber(1);
+ 190   2                              break;
+ 191   2                      case 6://减
+ 192   2                              if(workMode==0)break;
+ 193   2                              setNumber(0); 
+ 194   2                              break;
+ 195   2                              
+ 196   2                      default:
+ 197   2                              break;          
+ 198   2              }               
+ 199   1      }
+ 200          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    791    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =     11       2
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

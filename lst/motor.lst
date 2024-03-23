@@ -1,0 +1,69 @@
+C51 COMPILER V9.01   MOTOR                                                                 03/20/2024 01:22:19 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE MOTOR
+OBJECT MODULE PLACED IN .\obj\motor.obj
+COMPILER INVOKED BY: D:\MyProgrammeSetUp\KEILC51\C51\BIN\C51.EXE src\drive\motor.c LARGE BROWSE INCDIR(..\final_projects
+                    -;.\src;.\src\app;.\src\drive;.\src\include) DEBUG OBJECTEXTEND PRINT(.\lst\motor.lst) OBJECT(.\obj\motor.obj)
+
+line level    source
+
+   1          #include"motor.h"
+   2          
+   3          void delay_motor(unsigned char count1,unsigned char count2){
+   4   1              unsigned char i,j;
+   5   1              for(i = 0;i<count1;++i){
+   6   2                      for(j = 0;j<count2;++j);
+   7   2              }
+   8   1      }
+   9          
+  10          
+  11          
+  12          void motor_run_alert(){//这个函数是一个节拍 ，双相四拍的
+  13   1              unsigned long timeflag = 1;
+  14   1              while(timeflag<200){
+  15   2                      Apo = 0;
+  16   2                      Ane = 1;
+  17   2                      Bpo = 1;
+  18   2                      Bne = 0;
+  19   2                      delay_motor(num1,num2);
+  20   2              
+  21   2                      Apo = 1;
+  22   2                      Ane = 0;
+  23   2                      Bpo = 1;
+  24   2                      Bne = 0;
+  25   2                      delay_motor(num1,num2);
+  26   2              
+  27   2                      Apo = 1;
+  28   2                      Ane = 0;
+  29   2                      Bpo = 0;
+  30   2                      Bne = 1;
+  31   2                      delay_motor(num1,num2);
+  32   2              
+  33   2                      Apo = 0;
+  34   2                      Ane = 1;
+  35   2                      Bpo = 0;
+  36   2                      Bne = 1;
+  37   2                      delay_motor(num1,num2);
+  38   2                      
+  39   2                      timeflag++;     
+  40   2                      }
+  41   1                      
+  42   1      }
+  43          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    139    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----       4
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+C51 COMPILER V9.01   MOTOR                                                                 03/20/2024 01:22:19 PAGE 2   
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

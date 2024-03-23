@@ -1,0 +1,85 @@
+C51 COMPILER V9.01   KEY4_4                                                                03/20/2024 01:22:19 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE KEY4_4
+OBJECT MODULE PLACED IN .\obj\key4_4.obj
+COMPILER INVOKED BY: D:\MyProgrammeSetUp\KEILC51\C51\BIN\C51.EXE src\drive\key4_4.c LARGE BROWSE INCDIR(..\final_project
+                    -s;.\src;.\src\app;.\src\drive;.\src\include) DEBUG OBJECTEXTEND PRINT(.\lst\key4_4.lst) OBJECT(.\obj\key4_4.obj)
+
+line level    source
+
+   1          #include"key4_4.h"
+   2          
+   3          void delay10ms(void)   //误差 0us
+   4          {
+   5   1          unsigned char a,b,c;
+   6   1          for(c=5;c>0;c--)
+   7   1              for(b=4;b>0;b--)
+   8   1                  for(a=248;a>0;a--);
+   9   1      }
+  10          
+  11          unsigned char getKeyValue(void)
+  12          {
+  13   1              unsigned char hang = 0, lie = 0;
+  14   1              unsigned char keyvalue = 0;
+  15   1      
+  16   1               // 第1回合第1步
+  17   1               key = 0x0f;                            // 从IO口输出，写IO口
+  18   1               if (key != 0x0f)                       // 从IO口输入，读IO口
+  19   1               {
+  20   2                       // 读出的不是0x0f说明有按键被按下
+  21   2                       // 第1回合第2步：读出端口从读出值来判断是哪一行
+  22   2                       
+  23   2                       delay10ms();
+  24   2                       // 第一回合中算出行号
+  25   2                       switch (key)
+  26   2                       {
+  27   3                              case 0x0e:      hang = 1;       break;
+  28   3                              case 0x0d:      hang = 2;       break;
+  29   3                              case 0x0b:      hang = 3;       break;
+  30   3                              case 0x07:      hang = 4;       break;
+  31   3                              default:                                break;
+  32   3                       }
+  33   2      
+  34   2                       // 第2回合第1步
+  35   2                       key = 0xf0;
+  36   2                       if (key != 0xf0)
+  37   2                       {
+  38   3                                switch (key)
+  39   3                               {
+  40   4                                      case 0xe0:      lie = 1;        break;
+  41   4                                      case 0xd0:      lie = 2;        break;
+  42   4                                      case 0xb0:      lie = 3;        break;
+  43   4                                      case 0x70:      lie = 4;        break;
+  44   4                                      default:                                break;
+  45   4                               }
+  46   3      
+  47   3                              // 经过2个回合后hang和lie都知道了，然后根据hang和lie去计算键值即可
+  48   3                              keyvalue = (hang - 1) * 4 + lie;
+  49   3      
+  50   3                              return keyvalue;
+  51   3                       }
+  52   2               }
+  53   1      
+  54   1               return 0;
+C51 COMPILER V9.01   KEY4_4                                                                03/20/2024 01:22:19 PAGE 2   
+
+  55   1      }
+  56          
+  57          
+  58          
+  59                                                                                                    
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    163    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----       3
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
